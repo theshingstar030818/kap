@@ -16,19 +16,23 @@ const prodPath = formatUrl({
 
 const url = isDev ? devPath : prodPath;
 
-let cropper = null;
+let croppers = [];
 let shouldIgnoreBlur = false;
 
-const openCropperWindow = () => {
-  if (cropper) {
-    cropper.setIgnoreMouseEvents(false);
-    cropper.show();
-  } else {
-    const {width, height} = electron.screen.getPrimaryDisplay().bounds;
-    global.screen = {width, height};
-    cropper = new BrowserWindow({
-      x: 0,
-      y: 0,
+const openCropperWindow = async () => {
+  croppers = [];
+  const {screen} = electron;
+  const displays = screen.getAllDisplays();
+
+  for(const index in displays) {
+    const display = displays[index];
+
+    const {id, bounds} = display;
+    const {x, y, width, height} = bounds;
+
+    const cropper = new BrowserWindow({
+      x,
+      y,
       width,
       height,
       hasShadow: false,
@@ -36,28 +40,36 @@ const openCropperWindow = () => {
       resizable: false,
       moveable: false,
       frame: false,
-      transparent: true
+      transparent: true,
+      show: false
     });
 
-    // cropper.setIgnoreMouseEvents(true);
+    cropper.displayId = id;
+
     cropper.loadURL(url);
     cropper.setAlwaysOnTop(true, 'screen-saver', 1);
-    cropper.on('ready', cropper.focus);
+
+    cropper.webContents.on('did-finish-load', function() {
+      const isActiveDisplay = screen.getDisplayNearestPoint(screen.getCursorScreenPoint()).id === id;
+      cropper.webContents.send('display', {id, x, y, width, height, isActiveDisplay});
+    });
+
+    cropper.on('focus', () => {
+      croppers.forEach(c => c.webContents.send('display', {isActiveDisplay: c.displayId === id}));
+    });
+
+    cropper.on('closed', () => {
+      croppers.forEach(c => c.destroy());
+    });
 
     if (isDev) {
       cropper.openDevTools({mode: 'detach'});
     }
 
-    cropper.on('blur', () => {
-      if (!shouldIgnoreBlur && !cropper.webContents.isDevToolsFocused()) {
-        cropper.close();
-      }
-    });
-
-    cropper.on('closed', () => {
-      cropper = null;
-    });
+    croppers.push(cropper);
   }
+
+  croppers.forEach(c => c.show());
 };
 
 const ignoreBlur = () => {
@@ -66,11 +78,11 @@ const ignoreBlur = () => {
 
 const restoreBlur = () => {
   shouldIgnoreBlur = false;
-  cropper.focus();
+  // cropper.focus();
 };
 
 const closeCropperWindow = () => {
-  cropper.close();
+  // cropper.close();
 };
 
 module.exports = {

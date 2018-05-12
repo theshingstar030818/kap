@@ -19,9 +19,7 @@
     "build": "next build renderer && next export renderer",
     "dist": "npm run build && build",
     "pack": "npm run build && build --dir",
-    "postinstall": "electron-builder install-app-deps",
-    "prepush": "npm run test",
-    "precommit": "npm run test"
+    "postinstall": "electron-builder install-app-deps"
   },
   "bundle": {
     "name": "Kap"

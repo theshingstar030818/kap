@@ -9,7 +9,7 @@ import Cursor from './cursor';
 
 class Cropper extends React.Component {
   render() {
-    const {startMoving, width, height, resizing} = this.props;
+    const {startMoving, width, height, resizing, ready, isActive} = this.props;
 
     return (
       <Handles>
@@ -38,6 +38,6 @@ Cropper.propTypes = {
 
 export default connect(
   [CropperContainer],
-  ({width, height, resizing}) => ({width, height, resizing}),
+  ({width, height, resizing, ready, isActive}) => ({width, height, resizing, ready, isActive}),
   ({startMoving}) => ({startMoving})
 )(Cropper);

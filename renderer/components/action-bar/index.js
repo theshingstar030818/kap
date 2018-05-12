@@ -27,7 +27,8 @@ class ActionBar extends React.Component {
       startRecording,
       recording,
       cropperWidth,
-      cropperHeight
+      cropperHeight,
+      isActive
     } = this.props;
 
     const className = classNames('action-bar', {moving, hidden, advanced, recording});
@@ -118,8 +119,8 @@ ActionBar.propTypes = {
 
 export default connect(
   [ActionBarContainer, CropperContainer],
-  ({advanced, moving, width, height, x, y, recording}, {resizing, width: cropperWidth, height: cropperHeight, moving: cropperMoving}) => ({
-    advanced, width, height, x, y, moving, recording, hidden: cropperMoving || resizing, cropperWidth, cropperHeight
+  ({advanced, moving, width, height, x, y, recording}, {resizing, width: cropperWidth, height: cropperHeight, moving: cropperMoving, isActive}) => ({
+    advanced, width, height, x, y, moving, recording, hidden: cropperMoving || resizing || !isActive, cropperWidth, cropperHeight
   }),
   ({startMoving, startRecording}) => ({startMoving, startRecording})
 )(ActionBar);

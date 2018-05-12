@@ -25,6 +25,19 @@ export default class CropperPage extends React.Component {
 
   dev = false;
 
+  constructor(props) {
+    super(props);
+
+    if (!electron.ipcRenderer) {
+      return;
+    }
+
+    electron.ipcRenderer.on('display', (event, display) => {
+      console.log(display);
+      cropperContainer.setDisplay(display);
+    });
+  }
+
   componentDidMount() {
     document.addEventListener('keydown', this.handleKeyEvent);
     document.addEventListener('keyup', this.handleKeyEvent);

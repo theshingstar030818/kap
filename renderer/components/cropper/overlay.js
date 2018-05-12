@@ -19,7 +19,9 @@ class Overlay extends React.Component {
     x: 0,
     y: 0,
     width: 0,
-    height: 0
+    height: 0,
+    screenWidth: 0,
+    screenHeight: 0,
   }
 
   render() {
@@ -27,7 +29,7 @@ class Overlay extends React.Component {
       return null;
     }
 
-    const {width: screenWidth, height: screenHeight} = this.remote.getGlobal('screen');
+    // const {width: screenWidth, height: screenHeight} = this.remote.getGlobal('screen');
 
     const {
       onMouseUp,
@@ -39,12 +41,19 @@ class Overlay extends React.Component {
       height,
       moving,
       resizing,
-      currentHandle
+      currentHandle,
+      screenWidth,
+      screenHeight,
+      ready,
+      isActive
     } = this.props;
+
+    // const cropperWidth = ready && isActive ? width : 0;
+    // const cropperHeight = ready && isActive ? height : 0;
 
     const className = classNames('overlay', {
       picking: !resizing && !moving,
-      'no-transition': resizing || moving
+      'no-transition': resizing || moving || !isActive
     });
 
     return (
@@ -134,8 +143,8 @@ Overlay.propTypes = {
 
 export default connect(
   [CropperContainer, ActionBarContainer, CursorContainer],
-  ({x, y, width, height, moving, resizing, currentHandle}, actionBar) => ({
-    x, y, width, height, resizing, currentHandle, moving: moving || actionBar.moving
+  ({x, y, width, height, moving, resizing, currentHandle, screenWidth, screenHeight}, actionBar) => ({
+    x, y, width, height, resizing, currentHandle, screenWidth, screenHeight, moving: moving || actionBar.moving
   }),
   ({stopMoving, stopResizing, stopPicking, startPicking}, actionBar, {setCursor}) => ({
     onMouseUp: () => {
