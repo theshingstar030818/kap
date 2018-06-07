@@ -5,7 +5,7 @@ const ffmpeg = require('@ffmpeg-installer/ffmpeg');
 const util = require('electron-util');
 const execa = require('execa');
 
-const {getExportsWindow} = require('./exports');
+const {showExportsWindow, getExportsWindow, openExportsWindow} = require('./exports');
 const Export = require('./export');
 
 const ffmpegPath = util.fixPathForAsarUnpack(ffmpeg.path);
@@ -36,12 +36,18 @@ class ExportList {
     }
 
     this.currentExport = this.queue.shift();
+    if (this.currentExport.canceled) {
+      this._startNext();
+      return;
+    }
+
     this.currentExport.run()
       .then(() => {
         delete this.currentExport;
         this._startNext();
       })
-      .catch(() => {
+      .catch(err => {
+        console.log('fail called with ', err);
         this.currentExport.updateExport({
           status: 'failed',
           text: 'Export failed'
@@ -52,33 +58,21 @@ class ExportList {
   }
 
   async cancelExport(createdAt) {
-    if (this.currentExport.createdAt === createdAt) {
+    console.log('Asking me to delete ', createdAt);
+    console.log(this.currentExport ? 'exists' : 'nope');
+    if (this.currentExport && this.currentExport.createdAt === createdAt) {
       this.currentExport.cancel();
       delete this.currentExport;
       this._startNext();
     } else {
-      const index = this.queue.findIndex(exp => exp.createdAt === createdAt);
+      const index = this.exports.findIndex(exp => exp.createdAt === createdAt);
       if (index > -1) {
-        this.queue[index].cancel();
-        this.queue.splice(index, 1);
+        this.exports[index].cancel();
       }
     }
   }
 
-  async addExport() {
-    const options = {
-      exportOptions: {
-        width: 1200,
-        height: 800,
-        fps: 30,
-        loop: false
-      },
-      inputPath: '/Users/george/workspace/asd.mp4',
-      pluginName: 'kap-draggable',
-      serviceTitle: 'Drag and Drop',
-      format: 'mp4'
-    };
-
+  async addExport(options) {
     const newExport = new Export(options);
     const createdAt = (new Date()).toISOString();
 
@@ -88,6 +82,7 @@ class ExportList {
     newExport.createdAt = createdAt;
 
     callExportsWindow('update-export', Object.assign({}, newExport.data, {createdAt}));
+    showExportsWindow();
 
     newExport.updateExport = updates => {
       if (newExport.canceled) {
@@ -95,7 +90,7 @@ class ExportList {
       }
 
       for (const key in updates) {
-        if (updates[key]) {
+        if (updates[key] !== undefined) {
           newExport[key] = updates[key];
         }
       }
@@ -120,7 +115,7 @@ let exportList;
 
 ipc.answerRenderer('get-exports', () => exportList.getExports());
 
-ipc.answerRenderer('export', () => exportList.addExport().catch(err => console.log('ERRR ', err)));
+ipc.answerRenderer('export', options => exportList.addExport(options).catch(err => console.log('ERRR ', err)));
 
 ipc.answerRenderer('cancel-export', createdAt => exportList.cancelExport(createdAt).catch(err => console.log('ERRR ', err)));
 
@@ -134,4 +129,5 @@ const callExportsWindow = (channel, data) => {
 
 module.exports = () => {
   exportList = new ExportList();
+  openExportsWindow(false);
 };

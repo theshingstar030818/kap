@@ -66,11 +66,10 @@ const startRecording = async options => {
   }
 
   try {
+    console.log(`Here after ${(Date.now() - past) / 1000}s`);
     await aperture.startRecording(apertureOpts);
-
-    setRecordingTray(stopRecording);
-
     console.log(`Started recording after ${(Date.now() - past) / 1000}s`);
+    setRecordingTray(stopRecording);
   } catch (err) {
     // This prevents the button from being reset, since the recording has not yet started
     // This delay is due to internal framework delays in aperture native code

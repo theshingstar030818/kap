@@ -14,7 +14,7 @@
   "private": true,
   "main": "main/index.js",
   "scripts": {
-    "test": "xo",
+    "test": "echo \"No test specified\" && exit 0",
     "start": "electron .",
     "build": "next build renderer && next export renderer",
     "dist": "npm run build && build",
